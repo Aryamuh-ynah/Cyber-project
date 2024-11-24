@@ -3,27 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Caesar Cipher</title>
+  <title>Vigenère Cipher</title>
   <link rel="stylesheet" href="s.css">
 </head>
 <body>
   <header>
-    <h1>Caesar Cipher</h1>
+    <h1>Vigenère Cipher</h1>
     <nav>
       <a href="index.html">Home</a>
     </nav>
   </header>
   <main>
     <section>
-      <h2>Encrypt and Decrypt using Caesar Cipher</h2>
+      <h2>Encrypt and Decrypt using Vigenère Cipher</h2>
       <label for="plaintext">Input Text:</label>
       <input type="text" id="plaintext" placeholder="Enter your text">
       <br>
-      <label for="shift">Shift (0-25):</label>
-      <input type="number" id="shift" min="0" max="25" value="3">
+      <label for="key">Key:</label>
+      <input type="text" id="key" placeholder="Enter key">
       <br>
-      <button onclick="processCaesar(true)">Encrypt</button>
-      <button onclick="processCaesar(false)">Decrypt</button>
+      <button onclick="processVigenere(true)">Encrypt</button>
+      <button onclick="processVigenere(false)">Decrypt</button>
       <h3>Output:</h3>
       <p id="output"></p>
     </section>
@@ -32,10 +32,10 @@
     <p>&copy; 2024 CryptoSim. All rights reserved.</p>
   </footer>
   <script>
-    function processCaesar(encrypt) {
+    function processVigenere(encrypt) {
       const text = document.getElementById('plaintext').value;
-      const shift = document.getElementById('shift').value;
-      const output = encrypt ? caesarEncrypt(text, shift) : caesarDecrypt(text, shift);
+      const key = document.getElementById('key').value;
+      const output = encrypt ? vigenereEncrypt(text, key) : vigenereDecrypt(text, key);
       document.getElementById('output').innerText = output;
     }
   </script>
