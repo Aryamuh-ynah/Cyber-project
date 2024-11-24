@@ -53,18 +53,9 @@ function mod(n, m) {
     }).join('');
   }
   
-  // ROT13 Cipher
-  function rot13EncryptDecrypt(text) {
-    return caesarEncrypt(text, 13); // ROT13 is a Caesar Cipher with a shift of 13
-  }
   
-  // XOR Cipher
-  function xorEncryptDecrypt(text, key) {
-    return text.split('').map((char, index) => {
-      const keyChar = key[index % key.length];
-      return String.fromCharCode(char.charCodeAt(0) ^ keyChar.charCodeAt(0));
-    }).join('');
-  }
+
+  
   
   // Playfair Cipher Helpers
   function generatePlayfairTable(key) {
@@ -238,4 +229,62 @@ function mod(n, m) {
     }
     return 1;
   }
+  // Atbash Cipher Function
+function atbashCipher(input) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const reversedAlphabet = alphabet.split('').reverse().join('');
   
+  return input
+    .toUpperCase()
+    .split('')
+    .map(char => {
+      const index = alphabet.indexOf(char);
+      return index !== -1 ? reversedAlphabet[index] : char; // Non-alphabetic characters remain unchanged
+    })
+    .join('');
+}
+
+// Rail Fence Cipher Functions
+function railFenceEncrypt(input, numRails) {
+  if (numRails <= 1 || !input) return input;
+
+  const rails = Array.from({ length: numRails }, () => []);
+  let directionDown = false;
+  let row = 0;
+
+  for (let char of input) {
+    rails[row].push(char);
+    if (row === 0 || row === numRails - 1) directionDown = !directionDown;
+    row += directionDown ? 1 : -1;
+  }
+
+  return rails.flat().join('');
+}
+
+function railFenceDecrypt(ciphertext, numRails) {
+  if (numRails <= 1 || !ciphertext) return ciphertext;
+
+  const railLengths = Array(numRails).fill(0);
+  let directionDown = false;
+  let row = 0;
+
+  for (let i = 0; i < ciphertext.length; i++) {
+    railLengths[row]++;
+    if (row === 0 || row === numRails - 1) directionDown = !directionDown;
+    row += directionDown ? 1 : -1;
+  }
+
+  const rails = railLengths.map(len => ciphertext.slice(0, len).split(''));
+  ciphertext = ciphertext.slice(railLengths.reduce((a, b) => a + b, 0));
+  directionDown = false;
+  row = 0;
+
+  const plaintext = [];
+  for (let i = 0; i < ciphertext.length; i++) {
+    plaintext.push(rails[row].shift());
+    if (row === 0 || row === numRails - 1) directionDown = !directionDown;
+    row += directionDown ? 1 : -1;
+  }
+
+  return plaintext.join('');
+}

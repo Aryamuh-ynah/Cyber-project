@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Affine Cipher</title>
+  <title>Atbash Cipher</title>
   <link rel="stylesheet" href="s.css">
 </head>
 <body>
   <header>
-    <h1>Affine Cipher</h1>
+    <h1>Atbash Cipher</h1>
     <nav>
         <ul>
             <li><a href="index.html">Home</a></li>
@@ -25,18 +25,11 @@
   </header>
   <main>
     <section>
-      <h2>Encrypt and Decrypt using Affine Cipher</h2>
-      <label for="plaintext">Input Text:</label>
-      <input type="text" id="plaintext" placeholder="Enter your text">
+      <h2>Encrypt and Decrypt using Atbash Cipher</h2>
+      <label for="inputText">Input Text:</label>
+      <input type="text" id="inputText" placeholder="Enter your text">
       <br>
-      <label for="aKey">Multiplicative Key (A):</label>
-      <input type="number" id="aKey" placeholder="Enter A (1-25)">
-      <br>
-      <label for="bKey">Additive Key (B):</label>
-      <input type="number" id="bKey" placeholder="Enter B (0-25)">
-      <br>
-      <button onclick="processAffine(true)">Encrypt</button>
-      <button onclick="processAffine(false)">Decrypt</button>
+      <button onclick="processAtbash()">Process</button>
       <h3>Output:</h3>
       <p id="output"></p>
     </section>
@@ -45,11 +38,9 @@
     <p>&copy; 2024 CryptoSim. All rights reserved.</p>
   </footer>
   <script>
-    function processAffine(encrypt) {
-      const text = document.getElementById('plaintext').value;
-      const a = parseInt(document.getElementById('aKey').value, 10);
-      const b = parseInt(document.getElementById('bKey').value, 10);
-      const output = encrypt ? affineEncrypt(text, a, b) : affineDecrypt(text, a, b);
+    function processAtbash() {
+      const text = document.getElementById('inputText').value;
+      const output = atbashCipher(text);
       document.getElementById('output').innerText = output;
     }
   </script>
