@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Manager</title>
+  <style>
+    /* Same CSS as before */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button.add {
+      background-color: #007bff;
+      color: white;
+    }
+
+    button.retrieve {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+
+    .success {
+      color: green;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Password Manager</h2>
+    <div id="add-mode">
+      <input id="site-input" type="text" placeholder="Enter site" />
+      <input id="password-input" type="password" placeholder="Enter password" />
+      <button class="add" onclick="addPassword()">Add Password</button>
+      <button class="retrieve" onclick="switchToRetrieveMode()">Retrieve Password</button>
+    </div>
+
+    <div id="retrieve-mode" style="display: none;">
+      <input id="retrieve-site-input" type="text" placeholder="Enter site" />
+      <button class="add" onclick="retrievePassword()">Retrieve Password</button>
+      <button class="retrieve" onclick="switchToAddMode()">Add Password</button>
+      <p id="retrieved-password" class="success" style="display: none;"></p>
+    </div>
+
+    <p id="error-message" class="error" style="display: none;"></p>
+  </div>
+
+  <script>
+    const passwords = [];
+    let key;
+
+    // Generate AES encryption key
+    async function generateKey() {
+      key = await crypto.subtle.generateKey(
+        {
+          name: "AES-GCM",
+          length: 256,
+        },
+        true,
+        ["encrypt", "decrypt"]
+      );
+    }
+
+    // Encrypt the password
+    async function encryptPassword(password) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(password);
+      const iv = crypto.getRandomValues(new Uint8Array(12)); // Initialization vector
+      const encrypted = await crypto.subtle.encrypt(
+        {
+          name: "AES-GCM",
+          iv: iv,
+        },
+        key,
+        data
+      );
+      return { encrypted: Array.from(new Uint8Array(encrypted)), iv: Array.from(iv) };
+    }
+
+    // Decrypt the password
+    async function decryptPassword(encryptedData, iv) {
+      const decrypted = await crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv: new Uint8Array(iv),
+        },
+        key,
+        new Uint8Array(encryptedData)
+      );
+      const decoder = new TextDecoder();
+      return decoder.decode(decrypted);
+    }
+
+    async function addPassword() {
+      const site = document.getElementById("site-input").value;
+      const password = document.getElementById("password-input").value;
+      const errorMessage = document.getElementById("error-message");
+
+      if (site && password) {
+        const { encrypted, iv } = await encryptPassword(password);
+        passwords.push({ site, encrypted, iv });
+        document.getElementById("site-input").value = "";
+        document.getElementById("password-input").value = "";
+        errorMessage.style.display = "none";
+        alert("Password added successfully!");
+      } else {
+        errorMessage.textContent = "Please enter both site and password";
+        errorMessage.style.display = "block";
+      }
+    }
+
+    async function retrievePassword() {
+      const site = document.getElementById("retrieve-site-input").value;
+      const errorMessage = document.getElementById("error-message");
+      const retrievedPasswordElement = document.getElementById("retrieved-password");
+
+      const foundPassword = passwords.find((p) => p.site === site);
+      if (foundPassword) {
+        const decrypted = await decryptPassword(foundPassword.encrypted, foundPassword.iv);
+        retrievedPasswordElement.textContent = `Password: ${decrypted}`;
+        retrievedPasswordElement.style.display = "block";
+        errorMessage.style.display = "none";
+      } else {
+        retrievedPasswordElement.style.display = "none";
+        errorMessage.textContent = "No password found for this site";
+        errorMessage.style.display = "block";
+      }
+    }
+
+    function switchToRetrieveMode() {
+      document.getElementById("add-mode").style.display = "none";
+      document.getElementById("retrieve-mode").style.display = "block";
+    }
+
+    function switchToAddMode() {
+      document.getElementById("retrieve-mode").style.display = "none";
+      document.getElementById("add-mode").style.display = "block";
+    }
+
+    // Generate key on load
+    generateKey();
+  </script>
+</body>
+</html>
