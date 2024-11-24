@@ -70,50 +70,144 @@ function mod(n, m) {
   function generatePlayfairTable(key) {
     const alphabet = 'abcdefghiklmnopqrstuvwxyz'; // Excludes 'j'
     const table = [];
-    const used = new Set();
+    const seen = new Set();
     let currentRow = [];
-    const sanitizedKey = key.toLowerCase().replace(/j/g, 'i');
-    for (const char of sanitizedKey) {
-      if (alphabet.includes(char) && !used.has(char)) {
+    key = key.toLowerCase().replace(/j/g, 'i'); // Treat 'j' as 'i'
+  
+    // Add key characters to the table
+    for (const char of key) {
+      if (alphabet.includes(char) && !seen.has(char)) {
         currentRow.push(char);
-        used.add(char);
+        seen.add(char);
         if (currentRow.length === 5) {
           table.push(currentRow);
           currentRow = [];
         }
       }
     }
+  
+    // Add remaining alphabet characters
     for (const char of alphabet) {
-      if (!used.has(char)) {
+      if (!seen.has(char)) {
         currentRow.push(char);
-        used.add(char);
+        seen.add(char);
         if (currentRow.length === 5) {
           table.push(currentRow);
           currentRow = [];
         }
       }
     }
+  
     return table;
   }
   
   function playfairEncryptDecrypt(text, key, encrypt = true) {
     const table = generatePlayfairTable(key);
-    // Implement the encryption and decryption logic based on Playfair rules
-    // For brevity, full Playfair implementation logic omitted here
-    return text; // Replace with actual Playfair implementation
+    text = text.toLowerCase().replace(/j/g, 'i').replace(/[^a-z]/g, ''); // Preprocess text
+    const pairs = [];
+    let i = 0;
+  
+    // Form pairs, inserting 'x' between repeating letters
+    while (i < text.length) {
+      const char1 = text[i];
+      const char2 = text[i + 1] || 'x';
+      if (char1 === char2) {
+        pairs.push([char1, 'x']);
+        i++;
+      } else {
+        pairs.push([char1, char2]);
+        i += 2;
+      }
+    }
+  
+    const result = pairs.map(pair => {
+      const [row1, col1] = findPosition(pair[0], table);
+      const [row2, col2] = findPosition(pair[1], table);
+  
+      if (row1 === row2) {
+        // Same row
+        return table[row1][mod(col1 + (encrypt ? 1 : -1), 5)] +
+               table[row2][mod(col2 + (encrypt ? 1 : -1), 5)];
+      } else if (col1 === col2) {
+        // Same column
+        return table[mod(row1 + (encrypt ? 1 : -1), 5)][col1] +
+               table[mod(row2 + (encrypt ? 1 : -1), 5)][col2];
+      } else {
+        // Rectangle swap
+        return table[row1][col2] + table[row2][col1];
+      }
+    });
+  
+    return result.join('');
   }
+  
+  function findPosition(char, table) {
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 5; col++) {
+        if (table[row][col] === char) return [row, col];
+      }
+    }
+    return null;
+  }
+  
+  function mod(n, m) {
+    return ((n % m) + m) % m;
+  }
+
   
   // Transposition Cipher
   function transpositionEncrypt(text, key) {
-    const columns = key.split('').map((_, i) =>
-      text.split('').filter((_, j) => j % key.length === i).join('')
-    );
-    return columns.join('');
+    const keyOrder = key.split('').map((_, i) => i).sort((a, b) => key[a].localeCompare(key[b]));
+    const numRows = Math.ceil(text.length / key.length);
+    const grid = Array.from({ length: numRows }, () => Array(key.length).fill(''));
+  
+    // Fill the grid row by row
+    let index = 0;
+    for (let row = 0; row < numRows; row++) {
+      for (let col = 0; col < key.length; col++) {
+        if (index < text.length) {
+          grid[row][col] = text[index++];
+        }
+      }
+    }
+  
+    // Read columns based on key order
+    let ciphertext = '';
+    for (const col of keyOrder) {
+      for (let row = 0; row < numRows; row++) {
+        ciphertext += grid[row][col] || '';
+      }
+    }
+  
+    return ciphertext;
   }
   
   function transpositionDecrypt(text, key) {
-    // Decrypt transposition logic
-    return text; // Replace with decryption logic
+    const keyOrder = key.split('').map((_, i) => i).sort((a, b) => key[a].localeCompare(key[b]));
+    const numRows = Math.ceil(text.length / key.length);
+    const numCols = key.length;
+    const numExtraCells = numRows * numCols - text.length;
+  
+    const grid = Array.from({ length: numCols }, () => []);
+    let index = 0;
+  
+    // Fill the columns based on key order
+    for (const col of keyOrder) {
+      const colLength = numRows - (col >= numCols - numExtraCells ? 1 : 0);
+      for (let row = 0; row < colLength; row++) {
+        grid[col][row] = text[index++];
+      }
+    }
+  
+    // Read rows to reconstruct the plaintext
+    let plaintext = '';
+    for (let row = 0; row < numRows; row++) {
+      for (let col = 0; col < numCols; col++) {
+        if (grid[col][row]) plaintext += grid[col][row];
+      }
+    }
+  
+    return plaintext;
   }
   
   // Affine Cipher
